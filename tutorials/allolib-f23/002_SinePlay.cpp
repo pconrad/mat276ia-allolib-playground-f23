@@ -12,6 +12,9 @@
 #include "al/ui/al_ControlGUI.hpp"
 #include "al/ui/al_Parameter.hpp"
 
+using std::cout;
+using std::endl;
+
 // using namespace gam;
 using namespace al;
 
@@ -20,58 +23,54 @@ using namespace al;
 // define the synth's voice parameters and the sound and graphic generation
 // processes in the onProcess() functions.
 
-class SineEnv : public SynthVoice {
+class SineWav : public SynthVoice
+{
 public:
   // Unit generators
   gam::Pan<> mPan;
   gam::Sine<> mOsc;
-  gam::Env<3> mAmpEnv;
-  // envelope follower to connect audio output to graphics
-  gam::EnvFollow<> mEnvFollow;
-
-  // Additional members
-  Mesh mMesh;
+  gam::Env<4> mAmpEnv;
 
   // Initialize voice. This function will only be called once per voice when
   // it is created. Voices will be reused if they are idle.
-  void init() override {
+  void init() override
+  {
     // Intialize envelope
     mAmpEnv.curve(0); // make segments lines
-    mAmpEnv.levels(0, 1, 1, 0);
-    mAmpEnv.sustainPoint(2); // Make point 2 sustain until a release is issued
+    mAmpEnv.levels(0, 1, 1, 0.75, 0);
+    mAmpEnv.sustainPoint(3); // Make point 3 sustain until a release is issued
 
-    // We have the mesh be a sphere
-    addDisc(mMesh, 1.0, 30);
-
-    // This is a quick way to create parameters for the voice. Trigger
-    // parameters are meant to be set only when the voice starts, i.e. they
-    // are expected to be constant within a voice instance. (You can actually
-    // change them while you are prototyping, but their changes will only be
-    // stored and aplied when a note is triggered.)
-
-    createInternalTriggerParameter("amplitude", 0.3, 0.0, 1.0);
-    createInternalTriggerParameter("frequency", 60, 20, 5000);
-    createInternalTriggerParameter("attackTime", 1.0, 0.01, 3.0);
-    createInternalTriggerParameter("releaseTime", 3.0, 0.1, 10.0);
+    createInternalTriggerParameter("frequency", 440, 20, 5000);
+    createInternalTriggerParameter("amplitude", 0.8, 0.0, 1.0);
+    createInternalTriggerParameter("attackTime", 0.05, 0.01, 3.0);
+    createInternalTriggerParameter("decayTime", 0.05, 0.01, 3.0);
+    createInternalTriggerParameter("releaseTime", 0.5, 0.1, 10.0);
     createInternalTriggerParameter("pan", 0.0, -1.0, 1.0);
+    createInternalTriggerParameter("startPitch", 220.0, 10.0, 4000.0);
   }
 
   // The audio processing function
-  void onProcess(AudioIOData &io) override {
+  void onProcess(AudioIOData &io) override
+  {
     // Get the values from the parameters and apply them to the corresponding
     // unit generators. You could place these lines in the onTrigger() function,
     // but placing them here allows for realtime prototyping on a running
     // voice, rather than having to trigger a new voice to hear the changes.
     // Parameters will update values once per audio callback because they
     // are outside the sample processing loop.
-    mOsc.freq(getInternalParameterValue("frequency"));
+    float f = getInternalParameterValue("frequency");
+    mOsc.freq(f);
+
+    float a = getInternalParameterValue("amplitude");
     mAmpEnv.lengths()[0] = getInternalParameterValue("attackTime");
-    mAmpEnv.lengths()[2] = getInternalParameterValue("releaseTime");
+    mAmpEnv.lengths()[1] = getInternalParameterValue("decayTime");
+
+    mAmpEnv.lengths()[3] = getInternalParameterValue("releaseTime");
     mPan.pos(getInternalParameterValue("pan"));
-    while (io()) {
-      float s1 = mOsc() * mAmpEnv() * getInternalParameterValue("amplitude");
+    while (io())
+    {
+      float s1 = mAmpEnv() * (mOsc() * a);
       float s2;
-      mEnvFollow(s1);
       mPan(s1, s1, s2);
       io.out(0) += s1;
       io.out(1) += s2;
@@ -79,50 +78,32 @@ public:
     // We need to let the synth know that this voice is done
     // by calling the free(). This takes the voice out of the
     // rendering chain
-    if (mAmpEnv.done() && (mEnvFollow.value() < 0.001f))
+    if (mAmpEnv.done())
       free();
-  }
-
-  // The graphics processing function
-  void onProcess(Graphics &g) override {
-    // Get the paramter values on every video frame, to apply changes to the
-    // current instance
-    float frequency = getInternalParameterValue("frequency");
-    float amplitude = getInternalParameterValue("amplitude");
-    // Now draw
-    g.pushMatrix();
-    // Move x according to frequency, y according to amplitude
-    g.translate(frequency / 200 - 3, amplitude, -8);
-    // Scale in the x and y directions according to amplitude
-    g.scale(1 - amplitude, amplitude, 1);
-    // Set the color. Red and Blue according to sound amplitude and Green
-    // according to frequency. Alpha fixed to 0.4
-    g.color(mEnvFollow.value(), frequency / 1000, mEnvFollow.value() * 10, 0.4);
-    g.draw(mMesh);
-    g.popMatrix();
   }
 
   // The triggering functions just need to tell the envelope to start or release
   // The audio processing function checks when the envelope is done to remove
   // the voice from the processing chain.
   void onTriggerOn() override { mAmpEnv.reset(); }
-
   void onTriggerOff() override { mAmpEnv.release(); }
 };
 
 // We make an app.
-class MyApp : public App {
+class MyApp : public App
+{
 public:
-  // GUI manager for SineEnv voices
+  // GUI manager for SquareWave voices
   // The name provided determines the name of the directory
   // where the presets and sequences are stored
-  SynthGUIManager<SineEnv> synthManager{"SineEnv"};
+  SynthGUIManager<SineWav> synthManager{"SineWav"};
 
   // This function is called right after the window is created
   // It provides a grphics context to initialize ParameterGUI
   // It's also a good place to put things that should
   // happen once at startup.
-  void onCreate() override {
+  void onCreate() override
+  {
     navControl().active(false); // Disable navigation via keyboard, since we
                                 // will be using keyboard for note triggering
 
@@ -137,11 +118,13 @@ public:
   }
 
   // The audio callback function. Called when audio hardware requires data
-  void onSound(AudioIOData &io) override {
+  void onSound(AudioIOData &io) override
+  {
     synthManager.render(io); // Render audio
   }
 
-  void onAnimate(double dt) override {
+  void onAnimate(double dt) override
+  {
     // The GUI is prepared here
     imguiBeginFrame();
     // Draw a window that contains the synth control panel
@@ -150,7 +133,8 @@ public:
   }
 
   // The graphics callback function.
-  void onDraw(Graphics &g) override {
+  void onDraw(Graphics &g) override
+  {
     g.clear();
     // Render the synth's graphics
     synthManager.render(g);
@@ -160,40 +144,94 @@ public:
   }
 
   // Whenever a key is pressed, this function is called
-  bool onKeyDown(Keyboard const &k) override {
-    if (ParameterGUI::usingKeyboard()) { // Ignore keys if GUI is using
-                                         // keyboard
+  bool onKeyDown(Keyboard const &k) override
+  {
+    if (ParameterGUI::usingKeyboard())
+    { // Ignore keys if GUI is using
+      // keyboard
       return true;
     }
-    if (k.shift()) {
-      // If shift pressed then keyboard sets preset
-      int presetNumber = asciiToIndex(k.key());
-      synthManager.recallPreset(presetNumber);
-    } else {
-      // Otherwise trigger note for polyphonic synth
-      int midiNote = asciiToMIDI(k.key());
-      if (midiNote > 0) {
-        synthManager.voice()->setInternalParameterValue(
-            "frequency", ::pow(2.f, (midiNote - 69.f) / 12.f) * 432.f);
-        synthManager.triggerOn(midiNote);
-      }
+
+    switch (k.key())
+    {
+    case 'a':
+      std::cout << "a pressed!" << std::endl;
+      playSequenceA();
+      return false;
+    case 'b':
+      std::cout << "b pressed!" << std::endl;
+      playSequenceB();
+      return false;
     }
+
     return true;
   }
 
   // Whenever a key is released this function is called
-  bool onKeyUp(Keyboard const &k) override {
+  bool
+  onKeyUp(Keyboard const &k) override
+  {
     int midiNote = asciiToMIDI(k.key());
-    if (midiNote > 0) {
+    if (midiNote > 0)
+    {
       synthManager.triggerOff(midiNote);
     }
     return true;
   }
 
   void onExit() override { imguiShutdown(); }
+
+  // New code: a function to play a note A
+
+  void playNote(float freq, float time, float duration = 0.5, float amp = 0.2, float attack = 0.002, float decay = 0.002, float release = 1.0)
+  {
+    auto *voice = synthManager.synth().getVoice<SineWav>();
+    // amp, freq, attack, release, pan
+    std::vector<float> triggerParams = {freq, amp, 0.1, 0.1, 0.0};
+    // voice->setTriggerParams(triggerParams);
+    voice->setInternalParameterValue("frequency", freq);
+    voice->setInternalParameterValue("amplitude", amp);
+    // voice->setInternalParameterValue("attackTime", attack);
+    // voice->setInternalParameterValue("decayTime", decay);
+    // voice->setInternalParameterValue("releaseTime", release);
+
+    synthManager.synthSequencer().addVoiceFromNow(voice, time, duration);
+  }
+
+  void playSequenceA()
+  {
+    const float fundamental = 220;
+    for (int i = 1; i <= 10; i++)
+    {
+      float pitch = fundamental * i;
+      playNote(pitch, i / 2.0, 2.0, 0.02);
+    }
+  }
+
+  void playSequenceB(float beat = 1.0)
+  {
+
+    auto *voice = synthManager.synth().getVoice<SineWav>();
+    float startPitch = voice->getInternalParameterValue("startPitch");
+    cout << "startPitch = " << startPitch << endl; 
+
+    cout << "Playing sequence B" << endl;
+    const double halfStep = 1.059463094359; // 2^(1/12)
+    const double wholeStep = halfStep * halfStep;
+
+    float attack = 0.002;
+    float decay = 0.002;
+    float release = 0.25;
+
+    playNote(startPitch, 0, 2.0, 0.3, attack, decay, release * 0.1);
+    playNote(startPitch * wholeStep, beat * 1.0, 2.0, 0.3, attack, decay, release*0.2);
+    playNote(startPitch / halfStep, beat * 1.5, 2.0, 0.3, attack, decay, release*0.2);
+    playNote(startPitch, beat * 2.0, 2.0, 0.3, attack, decay, release*0.1);
+  }
 };
 
-int main() {
+int main()
+{
   // Create app instance
   MyApp app;
 
@@ -201,5 +239,6 @@ int main() {
   app.configureAudio(48000., 512, 2, 0);
 
   app.start();
+
   return 0;
 }

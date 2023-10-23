@@ -54,6 +54,9 @@ public:
     createInternalTriggerParameter("attackTime", 1.0, 0.01, 3.0);
     createInternalTriggerParameter("releaseTime", 3.0, 0.1, 10.0);
     createInternalTriggerParameter("pan", 0.0, -1.0, 1.0);
+    createInternalTriggerParameter("x", 0.0, -100, 100.0);
+    createInternalTriggerParameter("y", 0.0, -100.0, 100.0);
+
   }
 
   // The audio processing function
@@ -87,17 +90,19 @@ public:
   void onProcess(Graphics &g) override {
     // Get the paramter values on every video frame, to apply changes to the
     // current instance
-    float frequency = getInternalParameterValue("frequency");
+    float x = getInternalParameterValue("x");
+    float y = getInternalParameterValue("y");
     float amplitude = getInternalParameterValue("amplitude");
+    
     // Now draw
     g.pushMatrix();
     // Move x according to frequency, y according to amplitude
-    g.translate(frequency / 200 - 3, amplitude, -8);
+    g.translate(x, y, -8);
     // Scale in the x and y directions according to amplitude
     g.scale(1 - amplitude, amplitude, 1);
     // Set the color. Red and Blue according to sound amplitude and Green
     // according to frequency. Alpha fixed to 0.4
-    g.color(mEnvFollow.value(), frequency / 1000, mEnvFollow.value() * 10, 0.4);
+    // g.color(mEnvFollow.value(), frequency / 1000, mEnvFollow.value() * 10, 0.4);
     g.draw(mMesh);
     g.popMatrix();
   }
