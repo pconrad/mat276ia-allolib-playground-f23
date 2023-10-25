@@ -12,6 +12,9 @@
 #include "al/ui/al_ControlGUI.hpp"
 #include "al/ui/al_Parameter.hpp"
 
+#include "al/graphics/al_Font.hpp" // for text rendering
+
+
 // using namespace gam;
 using namespace al;
 
@@ -41,7 +44,9 @@ public:
     mAmpEnv.sustainPoint(2); // Make point 2 sustain until a release is issued
 
     // We have the mesh be a sphere
-    addDisc(mMesh, 1.0, 30);
+    int r = 1; // radius
+    int n = 30; // number of slices; e.g. 5 gives a pentagon, 30 is pretty smooth
+    addDisc(mMesh, r, n);
 
     // This is a quick way to create parameters for the voice. Trigger
     // parameters are meant to be set only when the voice starts, i.e. they
@@ -98,8 +103,9 @@ public:
     g.pushMatrix();
     // Move x according to frequency, y according to amplitude
     g.translate(x, y, -8);
+    g.scale(0.1, 0.1, 1.0);
     // Scale in the x and y directions according to amplitude
-    g.scale(1 - amplitude, amplitude, 1);
+    // g.scale(1 - amplitude, amplitude, 1);
     // Set the color. Red and Blue according to sound amplitude and Green
     // according to frequency. Alpha fixed to 0.4
     // g.color(mEnvFollow.value(), frequency / 1000, mEnvFollow.value() * 10, 0.4);
@@ -123,6 +129,16 @@ public:
   // where the presets and sequences are stored
   SynthGUIManager<SineEnv> synthManager{"SineEnv"};
 
+  float fontSize = 48.0;
+
+  Mesh meshXAxis;
+  Mesh meshYAxis;
+
+
+  // Font renderder
+  FontRenderer fontRender;
+
+
   // This function is called right after the window is created
   // It provides a grphics context to initialize ParameterGUI
   // It's also a good place to put things that should
@@ -136,8 +152,18 @@ public:
 
     imguiInit();
 
+    float w = float(width());
+    float h = float(height());
+
+    std::cout << "Width " << w << " Height " << h << std::endl;
+
+    addRect(meshXAxis, width() * 2, 16, 1, height()/2.0);
+    addRect(meshYAxis, 16, height() * 2, width()/2.0, 0);
+   
+    fontRender.load(Font::defaultFont().c_str(), 60, 1024);
+
     // Play example sequence. Comment this line to start from scratch
-    // synthManager.synthSequencer().playSequence("synth1.synthSequence");
+    synthManager.synthSequencer().playSequence("testxy.synthSequence");
     synthManager.synthRecorder().verbose(true);
   }
 
@@ -150,13 +176,36 @@ public:
     // The GUI is prepared here
     imguiBeginFrame();
     // Draw a window that contains the synth control panel
-    synthManager.drawSynthControlPanel();
+    // synthManager.drawSynthControlPanel();
     imguiEndFrame();
   }
 
   // The graphics callback function.
   void onDraw(Graphics &g) override {
     g.clear();
+
+     // This example uses only the orthogonal projection for 2D drawing
+    g.camera(Viewpoint::ORTHO_FOR_2D);  // Ortho [0:width] x [0:height]
+
+
+    // g.color(1, 0, 0, 0.4);
+    // addRect(meshFrame, width(), 2, 0, 0);
+
+   std::cout << "height() is " << height() << std::endl;
+
+
+    g.color(1, 0, 0, 0.4);
+    g.draw(meshXAxis);
+
+    g.color(0, 0, 1, 0.4);
+    g.draw(meshYAxis);
+
+    float textX = width() * 0.5;
+    float textY = height() * 0.5;
+
+    fontRender.write("x", fontSize);
+    fontRender.renderAt(g, {textX, textY, 0.0});
+
     // Render the synth's graphics
     synthManager.render(g);
 
