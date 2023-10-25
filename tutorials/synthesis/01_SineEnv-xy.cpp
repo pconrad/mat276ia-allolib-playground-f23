@@ -206,6 +206,18 @@ public:
     fontRender.write("x", fontSize);
     fontRender.renderAt(g, {textX, textY, 0.0});
 
+    g.color(1, 1, 1, 0.4);
+
+    fontRender.write("(100, 100)", fontSize);
+    fontRender.renderAt(g, {100, 100, 0.0});
+
+    g.color(1, 1, 0, 0.4);
+
+    fontRender.write("(0, 0)", fontSize);
+    fontRender.renderAt(g, {0, 0, 0.0});
+
+
+
     // Render the synth's graphics
     synthManager.render(g);
 
