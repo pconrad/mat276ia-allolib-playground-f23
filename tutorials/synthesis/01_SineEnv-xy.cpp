@@ -129,10 +129,30 @@ public:
   // where the presets and sequences are stored
   SynthGUIManager<SineEnv> synthManager{"SineEnv"};
 
-  float fontSize = 48.0;
+  float fontSize = 20.0;
 
   Mesh meshXAxis;
   Mesh meshYAxis;
+
+  Mesh meshTickx1;
+  Mesh meshTickx2;
+  Mesh meshTickx3;
+  Mesh meshTickx4;
+  Mesh meshTickx5;
+  Mesh meshTickx6;
+  Mesh meshTickx7;
+  Mesh meshTickx8;
+
+  Mesh meshTicky1;
+  Mesh meshTicky2;
+  Mesh meshTicky3;
+  Mesh meshTicky4;
+  Mesh meshTicky5;
+  Mesh meshTicky6;
+  Mesh meshTicky7;
+  Mesh meshTicky8;
+  
+  Mesh meshTick;
 
 
   // Font renderder
@@ -157,8 +177,38 @@ public:
 
     std::cout << "Width " << w << " Height " << h << std::endl;
 
-    addRect(meshXAxis, width() * 2, 16, 1, height()/2.0);
+    addRect(meshXAxis, width() * 2, 16, 0, height()/2.0);
+
+
+
+
+
     addRect(meshYAxis, 16, height() * 2, width()/2.0, 0);
+
+    //addRect(meshTick, 5, 30, (width()/2.0)+80, height()/2.0);
+    addRect(meshTick, 5, 30, 320, height()/2.0);
+
+
+    addRect(meshTickx1, 5, 30, (width()/2.0) - 320, height()/2.0);
+    addRect(meshTickx2, 5, 30, (width()/2.0) - 240, height()/2.0);
+    addRect(meshTickx3, 5, 30, (width()/2.0) - 160, height()/2.0);
+    addRect(meshTickx4, 5, 30, (width()/2.0) - 80, height()/2.0);
+    addRect(meshTickx5, 5, 30, (width()/2.0) + 80, height()/2.0);
+    addRect(meshTickx6, 5, 30, (width()/2.0) + 160, height()/2.0);
+    addRect(meshTickx7, 5, 30, (width()/2.0) + 240, height()/2.0);
+    addRect(meshTickx8, 5, 30, (width()/2.0) + 320, height()/2.0);
+
+
+    addRect(meshTicky1, 30, 5, (width()/2.0), height()/2.0 -240);
+    addRect(meshTicky2, 30, 5, (width()/2.0), height()/2.0 -180);
+    addRect(meshTicky3, 30, 5, (width()/2.0), height()/2.0 -120);
+    addRect(meshTicky4, 30, 5, (width()/2.0), height()/2.0 -60);
+    addRect(meshTicky5, 30, 5, (width()/2.0), height()/2.0 +60);
+    addRect(meshTicky6, 30, 5, (width()/2.0), height()/2.0 +120);
+    addRect(meshTicky7, 30, 5, (width()/2.0), height()/2.0 +180);
+    addRect(meshTicky8, 30, 5, (width()/2.0), height()/2.0 +240);
+    
+
    
     fontRender.load(Font::defaultFont().c_str(), 60, 1024);
 
@@ -191,7 +241,7 @@ public:
     // g.color(1, 0, 0, 0.4);
     // addRect(meshFrame, width(), 2, 0, 0);
 
-   std::cout << "height() is " << height() << std::endl;
+   //std::cout << "height() is " << height() << std::endl;
 
 
     g.color(1, 0, 0, 0.4);
@@ -200,21 +250,114 @@ public:
     g.color(0, 0, 1, 0.4);
     g.draw(meshYAxis);
 
+    g.color(1, 1, 1, 0.4);
+    g.draw(meshTick);
+
+    g.draw(meshTickx1);
+    g.draw(meshTickx2);
+    g.draw(meshTickx3);
+    g.draw(meshTickx4);
+    g.draw(meshTickx5);
+    g.draw(meshTickx6);
+    g.draw(meshTickx7);
+    g.draw(meshTickx8);
+
+    g.draw(meshTicky1);
+    g.draw(meshTicky2);
+    g.draw(meshTicky3);
+    g.draw(meshTicky4);
+    g.draw(meshTicky5);
+    g.draw(meshTicky6);
+    g.draw(meshTicky7);
+    g.draw(meshTicky8);
+
+
     float textX = width() * 0.5;
     float textY = height() * 0.5;
 
-    fontRender.write("x", fontSize);
+    fontRender.write("(320,240)", fontSize);
     fontRender.renderAt(g, {textX, textY, 0.0});
+
+
+    fontRender.write("(320,0)", fontSize);
+    fontRender.renderAt(g, {width()/2.0, height()/2.0 -240, 0.0});
+
+    fontRender.write("(320,60)", fontSize);
+    fontRender.renderAt(g, {width()/2.0, height()/2.0 -180, 0.0});
+    
+    fontRender.write("(320,120)", fontSize);
+    fontRender.renderAt(g, {width()/2.0, height()/2.0 -120, 0.0});
+    
+    fontRender.write("(320,180)", fontSize);
+    fontRender.renderAt(g, {width()/2.0, height()/2.0 -60, 0.0});
+
+    fontRender.write("(320,300)", fontSize);
+    fontRender.renderAt(g, {width()/2.0, height()/2.0  +60, 0.0});
+
+    fontRender.write("(320,360)", fontSize);
+    fontRender.renderAt(g, {width()/2.0, height()/2.0 +120, 0.0});
+
+    fontRender.write("(320,420)", fontSize);
+    fontRender.renderAt(g, {width()/2.0, height()/2.0 +180, 0.0});
+
+    fontRender.write("(320,480)", fontSize);
+    fontRender.renderAt(g, {width()/2.0, height()/2.0 +240, 0.0});
+
+
+   
+   
+   
+   
+    fontRender.write("(0,240)", fontSize);
+    fontRender.renderAt(g, {width()/2.0 - 320, height()/2.0 ,0.0});
+
+    fontRender.write("(80,240)", fontSize);
+    fontRender.renderAt(g, {width()/2.0 - 240, height()/2.0 ,0.0});
+
+    fontRender.write("(160,240)", fontSize);
+    fontRender.renderAt(g, {width()/2.0 - 160, height()/2.0 ,0.0});
+    
+    fontRender.write("(240,240)", fontSize);
+    fontRender.renderAt(g, {width()/2.0 - 80, height()/2.0 ,0.0});
+
+    fontRender.write("(400,240)", fontSize);
+    fontRender.renderAt(g, {width()/2.0 + 80, height()/2.0 ,0.0});
+
+    fontRender.write("(480,240)", fontSize);
+    fontRender.renderAt(g, {width()/2.0 + 160, height()/2.0 ,0.0});
+
+    fontRender.write("(560,240)", fontSize);
+    fontRender.renderAt(g, {width()/2.0 + 240, height()/2.0 ,0.0});
+
+    fontRender.write("(640,240)", fontSize);
+    fontRender.renderAt(g, {width()/2.0 + 320, height()/2.0 ,0.0});
+
+
+
+    
+
+
+
+
+
+
+    
 
     g.color(1, 1, 1, 0.4);
 
-    fontRender.write("(100, 100)", fontSize);
-    fontRender.renderAt(g, {100, 100, 0.0});
+   // fontRender.write("(100, 100)", fontSize);
+   // fontRender.renderAt(g, {100, 100, 0.0});
+
+    //fontRender.write("(100, 100)", fontSize);
+    //fontRender.renderAt(g, {100, 100, 0.0});
 
     g.color(1, 1, 0, 0.4);
 
     fontRender.write("(0, 0)", fontSize);
     fontRender.renderAt(g, {0, 0, 0.0});
+
+    //fontRender.write("(600, 600)", fontSize);
+    //fontRender.renderAt(g, {600, 600, 0.0});
 
 
 
