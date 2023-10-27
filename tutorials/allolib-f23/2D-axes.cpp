@@ -44,6 +44,15 @@ struct MyApp : public App {
     // Create x and y axes
     xAxis.vertex(-1, 0);
     xAxis.vertex(1, 0);
+  
+    float tickSize = 0.05;
+
+    for (float x=-1.0; x<=1.0; x+=0.2) {
+      xAxis.vertex(x, 0);
+      xAxis.vertex(x, tickSize);
+      xAxis.vertex(x, -tickSize);
+      xAxis.vertex(x, 0);
+    }
 
     yAxis.vertex(0, -1);
     yAxis.vertex(0, 1);
