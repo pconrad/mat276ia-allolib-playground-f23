@@ -64,10 +64,11 @@ public:
         mAmpEnv.sustainPoint(2); // Make point 2 sustain until a release is issued
 
         // We have the mesh be a sphere
-        int r = 10; // radius
+        int r = 100; // radius
         int n = 30; // number of slices; e.g. 5 gives a pentagon, 30 is pretty smooth
         addDisc(mMesh, r, n);
         addSphere(testMesh, 10, 30, 30);
+
 
         // This is a quick way to create parameters for the voice. Trigger
         // parameters are meant to be set only when the voice starts, i.e. they
@@ -116,6 +117,7 @@ public:
     // The graphics processing function
     void onProcess(Graphics &g) override
     {
+        #if(0)
         // Get the paramter values on every video frame, to apply changes to the
         // current instance
         float x = getInternalParameterValue("x");
@@ -123,17 +125,26 @@ public:
         float amplitude = getInternalParameterValue("amplitude");
         float frequency = getInternalParameterValue("frequency");
 
+        std::cout<< "x" << x << " y " << y << std::endl;
+
         // Now draw
         g.pushMatrix();
         // Move x according to frequency, y according to amplitude
         g.translate(x, y, -8);
         // Scale in the x and y directions according to amplitude
-        g.scale(amplitude, amplitude, 1);
+        // g.scale(1 - amplitude, amplitude, 1);
         // Set the color. Red and Blue according to sound amplitude and Green
         // according to frequency. Alpha fixed to 0.4
-        g.color(mEnvFollow.value(), frequency / 1000, mEnvFollow.value() * 10, 0.4);
+        // g.color(mEnvFollow.value(), frequency / 1000, mEnvFollow.value() * 10, 0.4);
+        
+        g.color(1, 0, 0, 0.5);
         g.draw(mMesh);
         g.popMatrix();
+        #endif
+         // Temporary hack to test drawing
+
+        g.color(1,1,1,0.5);
+        g.draw(testMesh);
     }
 
     // The triggering functions just need to tell the envelope to start or release
@@ -319,12 +330,11 @@ struct MyApp : public App
         float tickSize = 5.0;
         float labelOffset = 5.0;
 
-        drawYAxis(g, -90, 90, 30.0, tickSize, labelOffset, fontSize);
-        drawXAxis(g, -180, 180, 30.0, tickSize, labelOffset, fontSize);
-        drawWorldMap(g);
+        // drawYAxis(g, -90, 90, 30.0, tickSize, labelOffset, fontSize);
+        // drawXAxis(g, -180, 180, 30.0, tickSize, labelOffset, fontSize);
+        // drawWorldMap(g);
 
-        // Temporary hack to test drawing
-
+       
     }
 };
 

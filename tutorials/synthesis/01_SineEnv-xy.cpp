@@ -180,9 +180,6 @@ public:
     addRect(meshXAxis, width() * 2, 16, 0, height()/2.0);
 
 
-
-
-
     addRect(meshYAxis, 16, height() * 2, width()/2.0, 0);
 
     //addRect(meshTick, 5, 30, (width()/2.0)+80, height()/2.0);

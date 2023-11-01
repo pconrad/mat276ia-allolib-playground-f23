@@ -12,15 +12,26 @@
 #include "al/ui/al_ControlGUI.hpp"
 #include "al/ui/al_Parameter.hpp"
 
+#include "al/graphics/al_Font.hpp" // for text rendering
+
 // using namespace gam;
 using namespace al;
+
+float globalHeight = 1.0;
+float globalWidth = 1.0;
 
 // This example shows how to use SynthVoice and SynthManagerto create an audio
 // visual synthesizer. In a class that inherits from SynthVoice you will
 // define the synth's voice parameters and the sound and graphic generation
 // processes in the onProcess() functions.
 
-class SineEnv : public SynthVoice {
+std::vector<std::vector<Vec3f>> points;
+
+const float xScale = 180.0;
+const float yScale = 90.0;
+
+class SineEnv : public SynthVoice
+{
 public:
   // Unit generators
   gam::Pan<> mPan;
@@ -34,14 +45,15 @@ public:
 
   // Initialize voice. This function will only be called once per voice when
   // it is created. Voices will be reused if they are idle.
-  void init() override {
+  void init() override
+  {
     // Intialize envelope
     mAmpEnv.curve(0); // make segments lines
     mAmpEnv.levels(0, 1, 1, 0);
     mAmpEnv.sustainPoint(2); // Make point 2 sustain until a release is issued
 
     // We have the mesh be a sphere
-    addDisc(mMesh, 1.0, 30);
+    addDisc(mMesh, 0.1, 30);
 
     // This is a quick way to create parameters for the voice. Trigger
     // parameters are meant to be set only when the voice starts, i.e. they
@@ -54,10 +66,13 @@ public:
     createInternalTriggerParameter("attackTime", 1.0, 0.01, 3.0);
     createInternalTriggerParameter("releaseTime", 3.0, 0.1, 10.0);
     createInternalTriggerParameter("pan", 0.0, -1.0, 1.0);
+    createInternalTriggerParameter("x", 0.0, -180.0, 180.0);
+    createInternalTriggerParameter("y", 0.0, -90.0, 90.0);
   }
 
   // The audio processing function
-  void onProcess(AudioIOData &io) override {
+  void onProcess(AudioIOData &io) override
+  {
     // Get the values from the parameters and apply them to the corresponding
     // unit generators. You could place these lines in the onTrigger() function,
     // but placing them here allows for realtime prototyping on a running
@@ -68,7 +83,8 @@ public:
     mAmpEnv.lengths()[0] = getInternalParameterValue("attackTime");
     mAmpEnv.lengths()[2] = getInternalParameterValue("releaseTime");
     mPan.pos(getInternalParameterValue("pan"));
-    while (io()) {
+    while (io())
+    {
       float s1 = mOsc() * mAmpEnv() * getInternalParameterValue("amplitude");
       float s2;
       mEnvFollow(s1);
@@ -84,20 +100,36 @@ public:
   }
 
   // The graphics processing function
-  void onProcess(Graphics &g) override {
+  void onProcess(Graphics &g) override
+  {
     // Get the paramter values on every video frame, to apply changes to the
     // current instance
     float frequency = getInternalParameterValue("frequency");
     float amplitude = getInternalParameterValue("amplitude");
+    float x = getInternalParameterValue("x");
+    float y = getInternalParameterValue("y");
+
+    // std::cout << "x=" << x << " y=" << y << std::endl;
+
     // Now draw
     g.pushMatrix();
+
+    g.camera(Viewpoint::IDENTITY);
+    // g.scale(1.0 / xScale, 1.0 / yScale, 1.0);
+
     // Move x according to frequency, y according to amplitude
-    g.translate(frequency / 200 - 3, amplitude, -8);
+    g.translate(x/xScale, y/yScale, 0);
     // Scale in the x and y directions according to amplitude
-    g.scale(1 - amplitude, amplitude, 1);
+    
+    
+
+    float scale = amplitude * 10;
+    g.scale(scale * globalHeight / globalWidth, scale, 1.0);
+
     // Set the color. Red and Blue according to sound amplitude and Green
     // according to frequency. Alpha fixed to 0.4
-    g.color(mEnvFollow.value(), frequency / 1000, mEnvFollow.value() * 10, 0.4);
+    g.depthTesting(false);
+    g.color(mEnvFollow.value(), frequency / 1000, mEnvFollow.value() * 10, 1.0);
     g.draw(mMesh);
     g.popMatrix();
   }
@@ -111,8 +143,16 @@ public:
 };
 
 // We make an app.
-class MyApp : public App {
+class MyApp : public App
+{
 public:
+  Mesh xAxis;
+  Mesh yAxis;
+
+ // this font is for rendering text labels on the axes
+    FontRenderer fontRender;
+
+
   // GUI manager for SineEnv voices
   // The name provided determines the name of the directory
   // where the presets and sequences are stored
@@ -122,7 +162,13 @@ public:
   // It provides a grphics context to initialize ParameterGUI
   // It's also a good place to put things that should
   // happen once at startup.
-  void onCreate() override {
+  void onCreate() override
+  {
+
+  
+
+    fontRender.load(Font::defaultFont().c_str(), 60, 1024);
+
     navControl().active(false); // Disable navigation via keyboard, since we
                                 // will be using keyboard for note triggering
 
@@ -132,47 +178,72 @@ public:
     imguiInit();
 
     // Play example sequence. Comment this line to start from scratch
-    // synthManager.synthSequencer().playSequence("synth1.synthSequence");
+    synthManager.synthSequencer().playSequence("earthquakes.synthSequence");
     synthManager.synthRecorder().verbose(true);
   }
 
   // The audio callback function. Called when audio hardware requires data
-  void onSound(AudioIOData &io) override {
+  void onSound(AudioIOData &io) override
+  {
     synthManager.render(io); // Render audio
   }
 
-  void onAnimate(double dt) override {
+  void onAnimate(double dt) override
+  {
     // The GUI is prepared here
     imguiBeginFrame();
     // Draw a window that contains the synth control panel
-    synthManager.drawSynthControlPanel();
+    // synthManager.drawSynthControlPanel();
     imguiEndFrame();
   }
 
   // The graphics callback function.
-  void onDraw(Graphics &g) override {
+  void onDraw(Graphics &g) override
+  {
+
+    globalHeight = height();
+    globalWidth = width();
+
     g.clear();
     // Render the synth's graphics
     synthManager.render(g);
+
+    g.camera(Viewpoint::IDENTITY);
+
+    g.scale(1.0 / xScale, 1.0 / yScale, 1.0);
+
+    float fontSize = 10.0;
+    float tickSize = 5.0;
+    float labelOffset = 5.0;
+
+    drawYAxis(g, -90, 90, 30.0, tickSize, labelOffset, fontSize);
+    drawXAxis(g, -180, 180, 30.0, tickSize, labelOffset, fontSize);
+    drawWorldMap(g);
 
     // GUI is drawn here
     imguiDraw();
   }
 
   // Whenever a key is pressed, this function is called
-  bool onKeyDown(Keyboard const &k) override {
-    if (ParameterGUI::usingKeyboard()) { // Ignore keys if GUI is using
-                                         // keyboard
+  bool onKeyDown(Keyboard const &k) override
+  {
+    if (ParameterGUI::usingKeyboard())
+    { // Ignore keys if GUI is using
+      // keyboard
       return true;
     }
-    if (k.shift()) {
+    if (k.shift())
+    {
       // If shift pressed then keyboard sets preset
       int presetNumber = asciiToIndex(k.key());
       synthManager.recallPreset(presetNumber);
-    } else {
+    }
+    else
+    {
       // Otherwise trigger note for polyphonic synth
       int midiNote = asciiToMIDI(k.key());
-      if (midiNote > 0) {
+      if (midiNote > 0)
+      {
         synthManager.voice()->setInternalParameterValue(
             "frequency", ::pow(2.f, (midiNote - 69.f) / 12.f) * 432.f);
         synthManager.triggerOn(midiNote);
@@ -182,18 +253,189 @@ public:
   }
 
   // Whenever a key is released this function is called
-  bool onKeyUp(Keyboard const &k) override {
+  bool onKeyUp(Keyboard const &k) override
+  {
     int midiNote = asciiToMIDI(k.key());
-    if (midiNote > 0) {
+    if (midiNote > 0)
+    {
       synthManager.triggerOff(midiNote);
     }
     return true;
   }
 
   void onExit() override { imguiShutdown(); }
+
+  void drawLabelX(Graphics &g, float x, float labelOffset, float fontSize)
+  {
+    std::ostringstream oss;
+    oss << std::fixed << std::showpoint;
+    oss << std::setprecision(1);
+    oss << "x=" << x;
+    fontRender.alignCenter(); // makes the text centered around the position
+    fontRender.write(oss.str().c_str(), fontSize);
+    fontRender.renderAt(g, {x, labelOffset, 0.0});
+  }
+
+  void drawLabelY(Graphics &g, float y, float labelOffset, float fontSize)
+  {
+    std::ostringstream oss;
+    oss << std::fixed << std::showpoint;
+    oss << std::setprecision(1);
+    oss << "y=" << y;
+    fontRender.alignLeft(); // makes the text centered around the position
+    fontRender.write(oss.str().c_str(), fontSize);
+    fontRender.renderAt(g, {labelOffset, y - (fontSize * 0.2), 0.0});
+  }
+
+  void drawWorldMap(Graphics &g)
+  {
+    for (auto shape : points)
+    {
+      Mesh m;
+      m.primitive(Mesh::LINE_STRIP);
+      for (auto p : shape)
+      {
+        m.vertex(p);
+      }
+      g.color(1, 1, 1);
+      g.draw(m);
+    }
+  }
+
+  void drawXAxis(Graphics &g,
+                 float minX,
+                 float maxX,
+                 float tickIncrement,
+                 float tickSize,
+                 float labelOffset,
+                 float fontSize)
+  {
+    xAxis.primitive(Mesh::LINE_STRIP);
+
+    // Create x and y axes
+    xAxis.vertex(minX, 0);
+    xAxis.vertex(maxX, 0);
+
+    // Create the X tick marks and labels
+
+    for (float x = 0; x < maxX; x += tickIncrement)
+    {
+      xAxis.vertex(x, 0);
+      xAxis.vertex(x, tickSize);
+      xAxis.vertex(x, -tickSize);
+      xAxis.vertex(x, 0);
+      drawLabelX(g, x, labelOffset, fontSize);
+    }
+
+    for (float x = 0; x >= minX; x -= tickIncrement)
+    {
+      xAxis.vertex(x, 0);
+      xAxis.vertex(x, tickSize);
+      xAxis.vertex(x, -tickSize);
+      xAxis.vertex(x, 0);
+      drawLabelX(g, x, labelOffset, fontSize);
+    }
+
+    //  Draw the axis
+    g.color(1, 1, 0);
+    g.draw(xAxis);
+  }
+
+  void drawYAxis(Graphics &g,
+                 float minY,
+                 float maxY,
+                 float tickIncrement,
+                 float tickSize,
+                 float labelOffset,
+                 float fontSize)
+  {
+    yAxis.primitive(Mesh::LINE_STRIP);
+
+    yAxis.vertex(0, minY);
+    yAxis.vertex(0, maxY);
+
+    // Create the Y tick marks and labels
+
+
+    for (float y = 0; y <= maxY; y += tickIncrement)
+    {
+
+      yAxis.vertex(0, y);
+      yAxis.vertex(tickSize, y);
+      yAxis.vertex(-tickSize, y);
+      yAxis.vertex(0, y);
+      g.color(1, 1, 1);
+
+      drawLabelY(g, y, labelOffset, fontSize);
+    }
+
+
+    for (float y = 0; y >= minY; y -= tickIncrement)
+    {
+      yAxis.vertex(0, y);
+      yAxis.vertex(tickSize, y);
+      yAxis.vertex(-tickSize, y);
+      yAxis.vertex(0, y);
+      g.color(1, 1, 1);
+      drawLabelY(g, y, labelOffset, fontSize);
+    }
+
+    //  Draw the Y Axis
+
+    g.color(0, 1, 1);
+    g.draw(yAxis);
+
+  }
 };
 
-int main() {
+std::vector<std::string> split(const std::string &s, char delim)
+{
+  std::vector<std::string> result;
+  std::stringstream ss(s);
+  std::string item;
+
+  while (getline(ss, item, delim))
+  {
+    result.push_back(item);
+  }
+
+  return result;
+}
+
+void readPoints()
+{
+  // file is taken from KML file with only the <coordinates> sections pulled out
+  // and then the <coordinates> open/close tags put on their own lines
+  // and each pair of x,y put on a separate line
+
+  std::ifstream infile("../world-administrative.dat");
+  std::string line;
+  std::vector<Vec3f> thisShape;
+
+  while (std::getline(infile, line))
+  {
+    if (line == "<coordinates>")
+      continue;
+    if (line == "</coordinates>")
+    {
+      points.push_back(thisShape);
+      thisShape.clear();
+      continue;
+    }
+
+    auto parts = split(line, ',');
+    float x = std::stof(parts[0]);
+    float y = std::stof(parts[1]);
+    thisShape.push_back(Vec3f(x, y, 0.0f));
+  }
+  infile.close();
+}
+
+int main()
+{
+
+  readPoints();
+
   // Create app instance
   MyApp app;
 
