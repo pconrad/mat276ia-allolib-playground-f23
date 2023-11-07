@@ -1,4 +1,5 @@
 ﻿#include <cstdio> // for printing to stdout
+#include <algorithm>
 
 #include "Gamma/Analysis.h"
 #include "Gamma/Effects.h"
@@ -11,6 +12,7 @@
 #include "al/scene/al_SynthSequencer.hpp"
 #include "al/ui/al_ControlGUI.hpp"
 #include "al/ui/al_Parameter.hpp"
+#include "al/system/al_Time.hpp"
 
 #include "al/graphics/al_Font.hpp" // for text rendering
 
@@ -19,6 +21,8 @@ using namespace al;
 
 float globalHeight = 1.0;
 float globalWidth = 1.0;
+
+Clock globalTime(true);
 
 // This example shows how to use SynthVoice and SynthManagerto create an audio
 // visual synthesizer. In a class that inherits from SynthVoice you will
@@ -30,6 +34,7 @@ std::vector<std::vector<Vec3f>> points;
 const float xScale = 180.0;
 const float yScale = 90.0;
 
+//instrument
 class SineEnv : public SynthVoice
 {
 public:
@@ -148,6 +153,8 @@ class MyApp : public App
 public:
   Mesh xAxis;
   Mesh yAxis;
+  Mesh Progress;
+  Mesh bProgress;
 
  // this font is for rendering text labels on the axes
     FontRenderer fontRender;
@@ -188,6 +195,9 @@ public:
     synthManager.render(io); // Render audio
   }
 
+  //you can add dt to time t
+
+
   void onAnimate(double dt) override
   {
     // The GUI is prepared here
@@ -219,6 +229,7 @@ public:
     drawYAxis(g, -90, 90, 30.0, tickSize, labelOffset, fontSize);
     drawXAxis(g, -180, 180, 30.0, tickSize, labelOffset, fontSize);
     drawWorldMap(g);
+    drawProgress(g, -120, 120);
 
     // GUI is drawn here
     imguiDraw();
@@ -301,6 +312,37 @@ public:
       g.draw(m);
     }
   }
+  void drawProgress(Graphics &g,
+                 float minX,
+                 float maxX
+  )
+  {
+    bProgress.primitive(Mesh::LINE_STRIP);
+
+    
+    bProgress.vertex(minX, -80);
+    bProgress.vertex(maxX, -80);
+
+
+    g.color(1, 1, 1);
+    g.draw(bProgress);
+
+    Progress.primitive(Mesh::LINE_STRIP);
+
+    globalTime.update();
+    Progress.vertex(minX, -80);
+    double currTime = std::min((double)globalTime.now(), 60.0);
+    Progress.vertex(minX + ((double)currTime * (maxX-minX))/60.0, -80);
+
+    std::cout << (double) globalTime.now() << std::endl;
+
+    g.color(1, 0.5, 1);
+    g.draw(Progress);
+
+  }
+
+  
+  
 
   void drawXAxis(Graphics &g,
                  float minX,
@@ -445,3 +487,6 @@ int main()
   app.start();
   return 0;
 }
+
+// at around -85 put a line 
+//fill it in over time using dt 
