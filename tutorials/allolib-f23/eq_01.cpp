@@ -113,7 +113,7 @@ public:
     float amplitude = getInternalParameterValue("amplitude");
     float x = getInternalParameterValue("x");
     float y = getInternalParameterValue("y");
-
+//x= 90; y = 0; amplitude = 1;
     // std::cout << "x=" << x << " y=" << y << std::endl;
 
     // Now draw
@@ -471,7 +471,7 @@ void readPoints()
     thisShape.push_back(Vec3f(x, y, 0.0f));
   }
   infile.close();
-}
+} 
 
 int main()
 {
