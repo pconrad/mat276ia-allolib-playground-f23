@@ -30,6 +30,8 @@ std::vector<std::vector<Vec3f>> points;
 const float xScale = 180.0;
 const float yScale = 90.0;
 
+float globalTime = 0.0;
+
 class SineEnv : public SynthVoice
 {
 public:
@@ -190,6 +192,9 @@ public:
 
   void onAnimate(double dt) override
   {
+
+    globalTime += dt;
+
     // The GUI is prepared here
     imguiBeginFrame();
     // Draw a window that contains the synth control panel
